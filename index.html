@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo de Vigas - CIRSOC 201</title>
+    <link rel="stylesheet" href="/styles/style.css">
+    
+</head>
+<body>
+    <main>
+        <h1>Cálculo de armadura a flexión en vigas de H°A°</h1>
+        <section>
+            <h2>Carga de datos</h2>
+            <form action="">
+                <fieldset>
+                    <legend>Dimensiones de la sección transversal</legend>
+                    <div>
+                        <label for="anchoB">Ancho: </label>
+                        <input type="number" name="" id="anchoB" step="0.1"
+                        value="20"><span>cm</span>
+                    </div>
+                    <div>
+                        <label for="altoH">Alto: </label>
+                        <input type="number" name="" id="altoH" step="0.1"
+                        value="50"><span>cm</span>
+                    </div>
+                    <div>
+                        <label for="rec">Recubrimiento: </label>
+                        <input type="number" name="" id="rec" step="0.1"
+                        value="3.5"><span>cm</span>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>
+                        Esfuerzos requeridos de la viga
+                    </legend>
+                    <div>
+                        <label for="Nu">Esfuerzo Normal Nu: </label>
+                        <input type="number" name="" id="Nu" step="0.1"
+                        value="100"><span>kN</span>
+                    </div>
+                    <div>
+                        <label for="Mu">Momento Mu: </label>
+                        <input type="number" name="" id="Mu" step="0.1"
+                        value="10000"><span>kNcm</span>
+                    </div>
+                </fieldset>
+                <fieldset>
+                    <legend>
+                        Caracteristicas del Hormigón de la Viga
+                    </legend>
+                    <select name="" id="calidadH">
+                        <!-- <option value="H15">H15</option> -->
+                        <option value="H20">H20</option>
+                        <option value="H25">H25</option>
+                        <!-- <option value="H30">H30</option>
+                        <option value="H35">H35</option>
+                        <option value="H40">H40</option>
+                        <option value="H45">H45</option>
+                        <option value="H50">H50</option>
+                        <option value="H60">H60</option> -->
+                    </select>
+                </fieldset>
+            </form>
+            <button id="btnCalcular">Calcular</button>
+        </section>
+        <section>
+            <h2>Resultados</h2>
+            <p id="resultado1"></p>
+            <!-- ke Ec Et kc kz -->
+            <div id="tablaContainer">
+                <!-- Content insert with js -->
+            </div>
+        </section>
+    </main>
+    <script src="/scripts/app.js"></script>
+</body>
+</html>
