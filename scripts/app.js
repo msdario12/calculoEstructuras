@@ -328,17 +328,19 @@ const createTable = (arrayOfRows) => {
 
 }
 
+const redondear = (value, digits) => Math.round(value*10**digits)/10**digits
+
 const cargarResultadosTabla = (obj) => {
     // Reset the state of the table
     outputTablaContainer.innerHTML= ''
     const {ke, Ec, Et, kc, kz, AsNec} = obj;
     const rowHead = createRow(['Nombre', 'Valor', 'Unidad'],'th');
-    const areaNec = createRow(['Anec', AsNec, 'cm2'])
-    const keRow = createRow(['ke', ke, ''])
-    const EcRow = createRow(['Ec', Ec, ''])
-    const EtRow = createRow(['Et', Et, ''])
-    const kcRow = createRow(['kc', kc, ''])
-    const kzRow = createRow(['kz', kz, ''])
+    const areaNec = createRow(['Anec', redondear(AsNec,3), 'cm2'])
+    const keRow = createRow(['ke', redondear(ke,3), ''])
+    const EcRow = createRow(['Ec', redondear(Ec,3), ''])
+    const EtRow = createRow(['Et', redondear(Et,3), ''])
+    const kcRow = createRow(['kc', redondear(kc,3), ''])
+    const kzRow = createRow(['kz', redondear(kz,3), ''])
 
     const newTable = createTable([rowHead, areaNec ,keRow, EcRow, EtRow, kcRow, kzRow])
     outputTablaContainer.appendChild(newTable)
@@ -350,11 +352,13 @@ const createArrayCombBarras = (objComb) => {
     // output = [2Ø16+2Ø10, valorAreaTotal, %aprovechamiento]
     const compName1 = objComb.numDiam2 ? `${objComb.numDiam2}Ø${objComb.diam2}` : '';
     const compName2 = objComb.numDiam1 ? `+${objComb.numDiam1}Ø${objComb.diam1}` : '';
-    return [compName1+compName2, objComb.areaTot, objComb.aprov];
+    return [compName1+compName2, 
+        redondear(objComb.areaTot,3), 
+        redondear(objComb.aprov,2)+'%'];
 }
 
 const cargarBarrasTabla = (arrayOfRows) => {
-    // Reset the state of the table
+    // No reset content here, otherwise the first table will not show
     // outputTablaContainer.innerHTML= ''
     const rowHead = createRow(['Combinación', 'Área Total', '% Aprovechamiento'],'th');
     const newTable = createTable([rowHead,...arrayOfRows])
