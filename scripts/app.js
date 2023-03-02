@@ -23,7 +23,16 @@ const tablaKD = {
     0.841,
   ],
 };
-
+// Precios extraidos de la pagina de nimat.com.ar, marca acindar, dia 02/03/2023
+const tablaPreciosBarras = {
+    6: 1303.17,
+    8: 2215.72,
+    10: 3459.13,
+    12: 4958.20,
+    16: 8654.22,
+    20: 13553.43,
+    25: 21154.32,
+}
 const linearInterpolation = (index1, index2, key, H, kdCalc) => {
   let kd1 = tablaKD[H][index1];
   let kd2 = tablaKD[H][index2];
@@ -61,18 +70,19 @@ const calcCantbarras = (Abarra, AsNec) => Math.ceil(AsNec / Abarra);
 
 const calculateNumberBars = (aNec) => {
   const output = [];
-  const diamDisp = [6, 8, 10, 12, 16, 20, 25];
-  for (let i = 1; i < diamDisp.length; i++) {
+  const arrayDiam = [6, 8, 10, 12, 16, 20, 25];
+  for (let i = 1; i < arrayDiam.length; i++) {
     // Funcion para poner las combinaciones que verifican en un array
     const pushResults = () => {
       output.push({
         numDiam1: numB2,
-        diam1: diamDisp[i - 1],
+        diam1: arrayDiam[i - 1],
         numDiam2: numB1,
-        diam2: diamDisp[i],
+        diam2: arrayDiam[i],
         aprov: (aNec * 100) / areaTot,
         areaTot: areaTot,
         numBarrTotal: numB1 + numB2,
+        price: calculatePrice(numB2, arrayDiam[i - 1], numB1, arrayDiam[i])
       });
     };
     // Usando solamente un diametro
@@ -80,7 +90,7 @@ const calculateNumberBars = (aNec) => {
     let numB1 = 2;
     let numB2 = 0;
     while (areaTot <= aNec) {
-      areaTot = numB1 * calcArea(diamDisp[i]);
+      areaTot = numB1 * calcArea(arrayDiam[i]);
       if (areaTot >= aNec) {
         // Hacer algo para el caso en que verifica
         pushResults();
@@ -91,12 +101,12 @@ const calculateNumberBars = (aNec) => {
     numB1 = 2;
     areaTot = 0;
     while (areaTot <= aNec) {
-      areaTot = numB1 * calcArea(diamDisp[i]);
+      areaTot = numB1 * calcArea(arrayDiam[i]);
       if (areaTot >= aNec) {
         // No hacer nada y salir del while
         break;
       }
-      let areaSingleB2 = calcArea(diamDisp[i - 1]);
+      let areaSingleB2 = calcArea(arrayDiam[i - 1]);
       let areaNecB2 = aNec - areaTot;
       numB2 = calcCantbarras(areaSingleB2, areaNecB2);
       areaTot = areaTot + numB2 * areaSingleB2;
@@ -248,6 +258,11 @@ const cargarResultadosTabla = (obj) => {
   outputTablaContainer.appendChild(newTable);
 };
 
+const calculatePrice = (numDiam1, diam1, numDiam2, diam2) => {
+    return numDiam1 * tablaPreciosBarras[diam1]/12 + numDiam2 * tablaPreciosBarras[diam2]/12
+}
+
+
 const createArrayCombBarras = (objComb) => {
   // objComb = {};
   // El resultado tendria que ser apto para pasarlo a la funcion que crea las filas de la tabla
@@ -263,6 +278,7 @@ const createArrayCombBarras = (objComb) => {
     redondear(objComb.areaTot, 3),
     redondear(objComb.numBarrTotal, 3),
     redondear(objComb.aprov, 2) + "%",
+    redondear(objComb.price,2),
   ];
 };
 
@@ -270,7 +286,7 @@ const cargarBarrasTabla = (arrayOfRows) => {
   // No reset content here, otherwise the first table will not show
   // outputTablaContainer.innerHTML= ''
   const rowHead = createRow(
-    ["Combinación", "Área Total", "N°Total Barras", "% Aprovechamiento"],
+    ["Combinación", "Área Total", "N°Total Barras", "% Aprovechamiento", '$ Precio por 1m'],
     "th"
   );
   const newTable = createTable([rowHead, ...arrayOfRows]);
