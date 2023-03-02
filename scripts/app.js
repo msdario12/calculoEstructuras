@@ -7,7 +7,10 @@ const tablaKD = {
     1.089, 0.796, 0.67, 0.598, 0.55, 0.516, 0.49, 0.47, 0.453, 0.44, 0.429,
     0.419,
   ],
-  H30: {},
+  H30: [
+    0.994, 0.727, 0.612, 0.546, 0.502, 0.471, 0.447, 0.429, 0.414, 0.402, 0.391,
+    0.383,
+  ],
   ke: [
     24.301, 24.766, 25.207, 26.625, 26.021, 26.399, 26.758, 27.1, 27.427,
     27.739, 28.038, 28.324,
@@ -25,14 +28,14 @@ const tablaKD = {
 };
 // Precios extraidos de la pagina de nimat.com.ar, marca acindar, dia 02/03/2023
 const tablaPreciosBarras = {
-    6: 1303.17,
-    8: 2215.72,
-    10: 3459.13,
-    12: 4958.20,
-    16: 8654.22,
-    20: 13553.43,
-    25: 21154.32,
-}
+  6: 1303.17,
+  8: 2215.72,
+  10: 3459.13,
+  12: 4958.2,
+  16: 8654.22,
+  20: 13553.43,
+  25: 21154.32,
+};
 const linearInterpolation = (index1, index2, key, H, kdCalc) => {
   let kd1 = tablaKD[H][index1];
   let kd2 = tablaKD[H][index2];
@@ -48,11 +51,24 @@ const obtenerKeDeTabla = (kdCalc, H, tabla) => {
   for (value of tabla[H]) {
     // Buscamos el inmediato inferior
     if (kdCalc >= value) {
+      const arrayValues = ["ke", "Ec", "Et", "kc", "kz"];
+      let output = {};
+    //   Consultamos si el valor de kd calculado es mayor al maximo de la tabla
+      if (kdCalc >= tabla[H][0]) {
+        console.log('Se recomienda disminuir la altura d');
+        for (const value of arrayValues) {
+            output = {
+                ...output,
+                [value]: tabla[value][0]
+            }
+        }
+        console.log('output', output)
+        return output;
+        }
       // Obtenemos el index del inmediato inferior como 1 y el superior como 2
       let index1 = tabla[H].indexOf(value);
       let index2 = tabla[H].indexOf(value) - 1;
-      const arrayValues = ["ke", "Ec", "Et", "kc", "kz"];
-      let output = {};
+      
       for (const value of arrayValues) {
         output = {
           ...output,
@@ -61,7 +77,9 @@ const obtenerKeDeTabla = (kdCalc, H, tabla) => {
       }
       return output;
     }
+
   }
+  
 };
 const calcArea = (diam) => (Math.PI * (diam / 10) ** 2) / 4;
 const calcCantbarras = (Abarra, AsNec) => Math.ceil(AsNec / Abarra);
@@ -82,7 +100,7 @@ const calculateNumberBars = (aNec) => {
         aprov: (aNec * 100) / areaTot,
         areaTot: areaTot,
         numBarrTotal: numB1 + numB2,
-        price: calculatePrice(numB2, arrayDiam[i - 1], numB1, arrayDiam[i])
+        price: calculatePrice(numB2, arrayDiam[i - 1], numB1, arrayDiam[i]),
       });
     };
     // Usando solamente un diametro
@@ -259,9 +277,11 @@ const cargarResultadosTabla = (obj) => {
 };
 
 const calculatePrice = (numDiam1, diam1, numDiam2, diam2) => {
-    return numDiam1 * tablaPreciosBarras[diam1]/12 + numDiam2 * tablaPreciosBarras[diam2]/12
-}
-
+  return (
+    (numDiam1 * tablaPreciosBarras[diam1]) / 12 +
+    (numDiam2 * tablaPreciosBarras[diam2]) / 12
+  );
+};
 
 const createArrayCombBarras = (objComb) => {
   // objComb = {};
@@ -278,7 +298,7 @@ const createArrayCombBarras = (objComb) => {
     redondear(objComb.areaTot, 3),
     redondear(objComb.numBarrTotal, 3),
     redondear(objComb.aprov, 2) + "%",
-    redondear(objComb.price,2),
+    "$ " + redondear(objComb.price, 2),
   ];
 };
 
@@ -286,7 +306,13 @@ const cargarBarrasTabla = (arrayOfRows) => {
   // No reset content here, otherwise the first table will not show
   // outputTablaContainer.innerHTML= ''
   const rowHead = createRow(
-    ["Combinación", "Área Total", "N°Total Barras", "% Aprovechamiento", '$ Precio por 1m'],
+    [
+      "Combinación",
+      "Área Total",
+      "N°Total Barras",
+      "% Aprovechamiento",
+      "Precio por 1m de barras",
+    ],
     "th"
   );
   const newTable = createTable([rowHead, ...arrayOfRows]);
