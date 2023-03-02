@@ -95,7 +95,7 @@ const linearInterpolation = (index1, index2, key, H, kdCalc) => {
     let k2 = tablaKD[key][index2]
 
     const keC = k2 + ((k1-k2)*(kd2-kdCalc)/(kd2-kd1))
-    console.log('Valor de interpolacion - ',key, keC)
+    // console.log('Valor de interpolacion - ',key, keC)
     return keC;
 }
 
@@ -113,33 +113,13 @@ const obtenerKeDeTabla = (kdCalc, H, tabla) => {
                 kc: linearInterpolation(index1, index2, 'kc', H, kdCalc),
                 kz: linearInterpolation(index1, index2, 'kz', H, kdCalc),
             }
-            cargarResultadosTabla(output)
-            return  output;
-            // cargarResultadosTabla(output)
-            // return;
+            return output;
         }
     }
 }
 const calcArea = diam => Math.PI * (diam/10)**2/4;
 const calcCantbarras = (Abarra, AsNec) => Math.ceil(AsNec/Abarra)
 // Se espera que las unidades sean (cm, cm,kN, KNcm, 'H25', cm)
-const calculoViga = (vars) => {
-    const {anchoB, altoH, Nu, Mu, H, rec} = vars
-    const b = anchoB;
-    const h = altoH;
-    const facSeg = 0.90;
-    const Nn = Nu/1000/facSeg;
-    const Mn = Mu/100000/facSeg;
-    const d = h - rec;
-    const ye = h/2 - rec;
-    const Men = Mn - Nn*(ye/100)
-    const kdCalc = (d/100)/(Math.sqrt(Men/(b/100)))
-    console.log(b, h,'Valores de calculo',Nn, Mn, d, ye, 'Men',Men, 'kdCalc',kdCalc)
-    const obj = obtenerKeDeTabla(kdCalc, H, tablaKD)
-    // Calculo de armadura necesaria
-    const AsNec = obj.ke*(Men/(d/100))+(Nn*10000/420)
-    console.log('Armadura necesaria: ', AsNec, 'cm2')
-}
 
 // Se podria crear una funcion para determinar la cantidad de barras minimas recomendables en funcion de las dimensiones de la viga. Con esto, podemos trabajar usando primero solo 2 diametro contiguos para determinar varias combinaciones. Posteriormente en caso de vigas con dimensiones muy grandes podemos mezclar 3 diametros y ampliar la solucion.
 
@@ -165,52 +145,52 @@ const combBarrasIguales = (AsNec) => {
                             aprov: aprov, 
                             areaTot: area,
                             numBarrTotal: numB,
-                            });
-                continue;
+                        });
+                        continue;
+                    }
+                    numB++
+                }       
             }
-            numB++
-        }       
-    }
-    return resultado
-}
-const combBarrasDist = (AsNec) => {
-    const resultado = []
-    const diamDisp = [6,8,10,12,16,20,25];
-    for (let i=1; i<diamDisp.length; i++) {
-        let area = 0;
-        let numB = 2;
-        let numB2 = 1
-        let aprov;
-        // Usando barras distintas
-        while (area < AsNec) {
-            area = calcArea(diamDisp[i])*numB;
-            if (area >= AsNec) {
-            // console.log('La armadura que verifica es ',i, diamDisp[i], aprov);
-                aprov = (AsNec*100/area)
-                resultado.push({numDiam1: 0,
-                                diam1: 0, 
+            return resultado
+        }
+        const combBarrasDist = (AsNec) => {
+            const resultado = []
+            const diamDisp = [6,8,10,12,16,20,25];
+            for (let i=1; i<diamDisp.length; i++) {
+                let area = 0;
+                let numB = 2;
+                let numB2 = 1
+                let aprov;
+                // Usando barras distintas
+                while (area < AsNec) {
+                    area = calcArea(diamDisp[i])*numB;
+                    if (area >= AsNec) {
+                        // console.log('La armadura que verifica es ',i, diamDisp[i], aprov);
+                        aprov = (AsNec*100/area)
+                        resultado.push({numDiam1: 0,
+                            diam1: 0, 
+                            numDiam2: numB,
+                                diam2: diamDisp[i],
+                                aprov: aprov, 
+                                areaTot: area,
+                                numBarrTotal: numB + numB2,
+                            });
+                            continue;
+                        }
+                        numB2 = calcCantbarras(calcArea(diamDisp[i-1]),AsNec-area)
+                        area = area + numB2*calcArea(diamDisp[i-1])
+                        aprov = (AsNec*100/area)
+                        if (area >= AsNec) {
+                            // console.log('La armadura que verifica es ',i, diamDisp[i], aprov);
+                            resultado.push({numDiam1: numB2,
+                                diam1: diamDisp[i-1], 
                                 numDiam2: numB,
                                 diam2: diamDisp[i],
                                 aprov: aprov, 
                                 areaTot: area,
                                 numBarrTotal: numB + numB2,
-                                });
-                                continue;
-            }
-            numB2 = calcCantbarras(calcArea(diamDisp[i-1]),AsNec-area)
-            area = area + numB2*calcArea(diamDisp[i-1])
-            aprov = (AsNec*100/area)
-            if (area >= AsNec) {
-            // console.log('La armadura que verifica es ',i, diamDisp[i], aprov);
-            resultado.push({numDiam1: numB2,
-                            diam1: diamDisp[i-1], 
-                            numDiam2: numB,
-                            diam2: diamDisp[i],
-                            aprov: aprov, 
-                            areaTot: area,
-                            numBarrTotal: numB + numB2,
                             });
-            }
+                        }
             numB++
         }       
     }
@@ -221,10 +201,41 @@ const barrasTotales = (aNec, maxCantBarras) => {
     const resultado = [...combBarrasDist(aNec), ...combBarrasIguales(aNec)];
     resultado.sort((a,b) => b.aprov-a.aprov)
     resultado.sort((a,b) => a.numBarrTotal-b.numBarrTotal)
-    console.log(resultado.filter((comb) => comb.numDiam1+comb.numDiam2 <= maxCantBarras && comb.aprov >= 80))
+    return resultado.filter((comb) => comb.numDiam1+comb.numDiam2 <= maxCantBarras && comb.aprov >= 80)
 }
 
 barrasTotales(9.5,50)
+
+const calculoViga = (vars) => {
+    const {anchoB, altoH, Nu, Mu, H, rec} = vars
+    const b = anchoB;
+    const h = altoH;
+    const facSeg = 0.90;
+    const Nn = Nu/1000/facSeg;
+    const Mn = Mu/100000/facSeg;
+    const d = h - rec;
+    const ye = h/2 - rec;
+    const Men = Mn - Nn*(ye/100)
+    const kdCalc = (d/100)/(Math.sqrt(Men/(b/100)))
+    // console.log(b, h,'Valores de calculo',Nn, Mn, d, ye, 'Men',Men, 'kdCalc',kdCalc)
+    let objTabla = obtenerKeDeTabla(kdCalc, H, tablaKD)
+    // Calculo de armadura necesaria
+    const AsNec = objTabla.ke*(Men/(d/100))+(Nn*10000/420);
+    // Agregamos el valor de AsNec al objeto de resultados
+    objTabla = {...objTabla, AsNec}
+    // Llamamos a la funcion encargada de mostrar los resultados
+    cargarResultadosTabla(objTabla);
+    console.log('Armadura necesaria: ', AsNec, 'cm2')
+    // Llamamos a la funcion que en base al AreaNec calcula las combinaciones de barras que cumplan
+    let objBarras = barrasTotales(AsNec,20);
+    // Convertimos los valores para pasarlos en forma de Array
+    const arrayBarras = [];
+    for (const obj of objBarras) {
+        arrayBarras.push(createRow(createArrayCombBarras(obj))) 
+    }
+    console.log(arrayBarras,'arrayBarras')
+    cargarBarrasTabla(arrayBarras)
+}
 
 // Interaccion con el DOM, obtengo elementos
 const inputAnchoB = document.getElementById('anchoB')
@@ -235,7 +246,6 @@ const inputMu = document.getElementById('Mu')
 const inputH = document.getElementById('calidadH')
 const btnCalc = document.getElementById('btnCalcular')
 
-const outputTabla = document.getElementById('tablaResultados')
 const outputTablaContainer = document.getElementById('tablaContainer')
 
 const output = document.getElementById('resultado1')
@@ -287,6 +297,7 @@ btnCalc.onclick = () => calculoViga(vars)
 // kz
 
 const createRow = (array,type = 'td') => {
+    // The array is a array of content of the row [col1, col2, ...]
     let newRow = document.createElement('tr')
     let newTD = document.createElement(type)
     for (const value of array) {
@@ -318,14 +329,35 @@ const createTable = (arrayOfRows) => {
 }
 
 const cargarResultadosTabla = (obj) => {
-    const {ke, Ec, Et, kc, kz} = obj;
+    // Reset the state of the table
+    outputTablaContainer.innerHTML= ''
+    const {ke, Ec, Et, kc, kz, AsNec} = obj;
     const rowHead = createRow(['Nombre', 'Valor', 'Unidad'],'th');
+    const areaNec = createRow(['Anec', AsNec, 'cm2'])
     const keRow = createRow(['ke', ke, ''])
     const EcRow = createRow(['Ec', Ec, ''])
     const EtRow = createRow(['Et', Et, ''])
     const kcRow = createRow(['kc', kc, ''])
     const kzRow = createRow(['kz', kz, ''])
 
-    const newTable = createTable([rowHead, keRow, EcRow, EtRow, kcRow, kzRow])
+    const newTable = createTable([rowHead, areaNec ,keRow, EcRow, EtRow, kcRow, kzRow])
     outputTablaContainer.appendChild(newTable)
 }
+
+const createArrayCombBarras = (objComb) => {
+    // objComb = {};
+    // El resultado tendria que ser apto para pasarlo a la funcion que crea las filas de la tabla
+    // output = [2Ø16+2Ø10, valorAreaTotal, %aprovechamiento]
+    const compName1 = objComb.numDiam2 ? `${objComb.numDiam2}Ø${objComb.diam2}` : '';
+    const compName2 = objComb.numDiam1 ? `+${objComb.numDiam1}Ø${objComb.diam1}` : '';
+    return [compName1+compName2, objComb.areaTot, objComb.aprov];
+}
+
+const cargarBarrasTabla = (arrayOfRows) => {
+    // Reset the state of the table
+    // outputTablaContainer.innerHTML= ''
+    const rowHead = createRow(['Combinación', 'Área Total', '% Aprovechamiento'],'th');
+    const newTable = createTable([rowHead,...arrayOfRows])
+    outputTablaContainer.appendChild(newTable)
+}
+
